@@ -8,33 +8,46 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "ohci_pci" "ehci_pci" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/312d420f-e00f-4f7e-a537-3c1c64e59e85";
+    { device = "/dev/disk/by-uuid/000bb2d1-dfb8-4281-8b98-69deda610f58";
       fsType = "btrfs";
-      options = [ "compress=zstd" ];
+    };
+
+  fileSystems."/home" =
+    { device = "/dev/disk/by-uuid/000bb2d1-dfb8-4281-8b98-69deda610f58";
+      fsType = "btrfs";
+    };
+
+  fileSystems."/nix" =
+    { device = "/dev/disk/by-uuid/000bb2d1-dfb8-4281-8b98-69deda610f58";
+      fsType = "btrfs";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/A95F-260E";
+    { device = "/dev/disk/by-uuid/6070-5C1F";
       fsType = "vfat";
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
-  swapDevices =
-    [ { device = "/dev/disk/by-uuid/4a458ef7-1b87-453e-a2b4-e823d8a52ef6"; }
-    ];
+  fileSystems."/games" = 
+   { device = "/dev/disk/by-uuid/000bb2d1-dfb8-4281-8b98-69deda610f58";
+     fsType = "btrfs";
+   };
 
-  # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
-  # (the default) this is the recommended approach. When using systemd-networkd it's
-  # still possible to use this option, but it's recommended to use it in conjunction
-  # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-  networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
+  fileSystems."/swap" = 
+   { device = "/dev/disk/by-uuid/000bb2d1-dfb8-4281-8b98-69deda610f58";
+     fsType = "btrfs";
+   };
+
+  swapDevices = [{ 
+   device = "/swap/swapfile"; 
+   size = 8*1024;
+  }];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

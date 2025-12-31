@@ -20,9 +20,6 @@
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     hyprlock.url = "github:hyprwm/Hyprlock";
     hypridle.url = "github:hyprwm/Hypridle";
-
-    aagl.url = "github:ezKEa/aagl-gtk-on-nix";
-    aagl.inputs.nixpkgs.follows = "nixpkgs";
     
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
 

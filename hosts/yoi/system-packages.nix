@@ -1,18 +1,18 @@
 { config, pkgs, ... }:
 {
  environment.systemPackages = with pkgs; [
-    dunst
+#    dunst
     cifs-utils
-    virt-manager
+#    virt-manager
     glib
     alsa-utils
     gnupg
     wget
     zip
-    alacritty
-    rofi-wayland
-    gnome-keyring
-    eog
+#    alacritty
+#    rofi-wayland
+#    gnome-keyring
+#    eog
     htop
     killall
     zip
@@ -24,16 +24,12 @@
     mpv
     wineWowPackages.staging
     winetricks
-    lxappearance
+#    lxappearance
     git
-    qemu_kvm
+#    qemu_kvm
     qjackctl
     shared-mime-info
     xdg-utils
     protonup-qt
-    (pkgs.hwloc.override {
-      x11Support = true;
-      })
-    lxqt.lxqt-policykit
   ];
 }

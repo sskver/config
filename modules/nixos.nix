@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }: 
+{ config, pkgs, lib, inputs, ... }: 
 {
   services.fstrim.enable = true;
   fonts.fontconfig.allowBitmaps = true;
@@ -11,7 +11,7 @@
     jetbrains-mono
     noto-fonts
     noto-fonts-cjk-sans
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     siji
     creep
   ];
@@ -37,7 +37,7 @@
    dates = "weekly";
    options = "--delete-older-than 10d";
   };
-
+/*
   # nightlight
   #services.geoclue2.appConfig.redshift.isAllowed = true;
   location.provider = "geoclue2";
@@ -54,7 +54,7 @@
       night = 3700;
     };
   };
-
+*/
   # pipest wire, audio
   security.rtkit.enable = true;
   services.pipewire = {
@@ -65,4 +65,14 @@
     jack.enable = true;
     socketActivation = true;
   };
+
+  security.wrappers."mount.cifs" = {
+    program = "mount.cifs";
+    source = "${lib.getBin pkgs.cifs-utils}/bin/mount.cifs";
+    owner = "root";
+    group = "root";
+    setuid = true;
+  };
+ 
+  services.btrfs.autoScrub.enable = true;
 }

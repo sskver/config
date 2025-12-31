@@ -2,7 +2,6 @@
 {
   imports = [
     #../../modules/emacs.nix
-    ../../modules/discord.nix
     inputs.hyprcursor-phinger.homeManagerModules.hyprcursor-phinger
   ];
 
@@ -11,43 +10,32 @@
   
   home.stateVersion = "23.05"; 
   home.packages = with pkgs; [
-    grim
-    slurp
-    wl-clipboard
-    #(jetbrains.plugins.addPlugins jetbrains.idea-ultimate [ "github-copilot" "darcula-pitch-black" ])
+ #   grim
+ #   slurp
+ #   wl-clipboard
+ #   waybar
+ #   hyprpaper
+ #   pywal
     vscode
-    easyeffects
     audacity
     prismlauncher
     lutris
     vial
     sshfs
     pavucontrol
-    google-chrome
-    qbittorrent
     yt-dlp
     obs-studio
     steam-run
     pfetch
-    pywal
     rpi-imager
-    #texlive.combined.scheme-full
-    #inputs.nix-gaming.packages.x86_64-linux.osu-lazer-bin
-    #inputs.nix-gaming.packages.x86_64-linux.osu-stable
-    waybar
-    hyprpaper
     mangohud
     any-nix-shell
     kdePackages.ark
     nodejs
     nodePackages.pnpm
-    gpu-screen-recorder
     gpu-screen-recorder-gtk
     obsidian
-    mpvpaper
     xivlauncher
-    virt-viewer
-    rpcs3
     slack
     uxplay
     inputs.zen-browser.packages."${system}".default
@@ -55,14 +43,17 @@
     remmina
     xorg.xrandr
     solaar
-    piper
-    plexamp
-    umu-launcher
-    code-cursor
+    lsfg-vk-ui
+    deskflow
+    vulkan-tools
+    virt-manager
+    moonlight-qt
+    discord
+    losslesscut-bin
   ];
 
-  programs.hyprcursor-phinger.enable = true;
-  
+ # programs.hyprcursor-phinger.enable = true;
+ /* 
   programs.hyprlock = {
     enable = false;
   };
@@ -93,10 +84,10 @@
   home.file = {
 #    ".config/i3".source = ../../home/i3;
 #    ".config/polybar".source = ../../home/polybar;
-    ".config/rofi".source = ../../home/rofi;
-    ".config/alacritty".source = ../../home/alacritty;
-    ".config/hypr".source = ../../home/hypr;
-    ".config/waybar".source = ../../home/waybar;
+#    ".config/rofi".source = ../../home/rofi;
+#    ".config/alacritty".source = ../../home/alacritty;
+#    ".config/hypr".source = ../../home/hypr;
+#    ".config/waybar".source = ../../home/waybar;
   };
 
   xdg.enable = true;
