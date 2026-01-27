@@ -1,4 +1,9 @@
-{ config, lib, pkgs, inputs, ... }: 
+{ config, lib, pkgs, inputs, ... }:
+let
+  it87-frankcrawford = pkgs.callPackage ../../modules/it87-frankcrawford.nix {
+    kernel = pkgs.linuxPackages_zen.kernel;
+  };
+in
 {
   imports =
     [
@@ -8,7 +13,7 @@
       inputs.spicetify-nix.nixosModules.default
       ../../modules/gpu-screen-recorder-ui.nix
     ];
-
+ 
   nixpkgs.overlays = [
     (final: prev: {
       klassy = final.callPackage ../../modules/klassy.nix { };
@@ -30,6 +35,12 @@
   };
 
   hardware = {
+    uinput.enable = true;
+    opentabletdriver = {
+      enable = true;
+      daemon.enable = true;
+    };
+    
     nvidia-container-toolkit = {
       enable = true;
       mount-nvidia-executables = false;
@@ -61,6 +72,12 @@
     logitech.wireless.enable = true;
   };
 
+  systemd.services.display-manager = {
+    after = [ "systemd-udev-settle.service" ];
+    wants = [ "systemd-udev-settle.service" ];
+  };
+
+
   boot = {
     loader = {
       systemd-boot = {
@@ -70,11 +87,39 @@
       efi.canTouchEfiVariables = true;
     };
     supportedFilesystems = [ "ntfs" ];  
+
+    extraModulePackages = [
+      it87-frankcrawford
+      config.boot.kernelPackages.zenergy
+    ];
+    blacklistedKernelModules = [ "wacom" ];
+    
     kernelPackages = pkgs.linuxPackages_zen;
-    kernelModules = [ "i2c-dev" "i2c-piix4" "vfio-pci" "vfio" "vfio_iommu_type1" "vfio_virqfd" "nvidia_uvm" ];
-    kernelParams = [ "nvidia_drm.fbdev=1" "nvidia_drm.modeset=1" "amd_iommu=on" "kvm-amd.avic=1" "kvm_amd.nested=1" "kvm_amd.sev=1" "acpi_enforce_resources=lax" "pcie_acs_override=downstream,multifunction" "quiet" "udev.log_level=0" ];
+    kernelModules = [ 
+        "i2c-dev" "i2c-piix4" "nvidia_uvm" 
+        "it87"
+        "zenergy"
+        "uinput"
+        #"vfio-pci" "vfio" "vfio_iommu_type1" "vfio_virqfd" 
+      ];
+    kernelParams = [ 
+        "nvidia_drm.fbdev=1" 
+        "simpledrm=0" 
+        #"vfio-pci.ids=10de:2805,10de:22bd"
+        "nvidia_drm.modeset=1"
+        "amd_iommu=on" "kvm-amd.avic=1" "kvm_amd.nested=1" "kvm_amd.sev=1" 
+        "acpi_enforce_resources=lax" 
+        #"pcie_acs_override=downstream,multifunction" 
+      #"quiet" "udev.log_level=0" 
+        "video=DP-3:2560x1440@180"
+        "video=DP-2:1920x1080@144,rotate=90"
+        #"mem_sleep_default=s2idle"
+      ];
     tmp.cleanOnBoot = true;
-    extraModprobeConfig = "options vfio-pci ids=10de:0e22,10de:0beb";
+
+    extraModprobeConfig = ''
+      options it87 ignore_resource_conflict=1 force_id=0x8696
+    '';
   };
 
   security = {
@@ -82,7 +127,19 @@
     polkit.enable = true;
   };
 
-  virtualisation.docker.enable = true;
+  virtualisation = {
+    docker.enable = true;
+    /*libvirtd = {
+      enable = true;
+      qemu = {
+        #package = pkgs.qemu_kvm.overrideAttrs (attrs: {
+        #  patches = attrs.patches or [] ++ [ ../../patches/qemu-hide-hypervisor-bit.patch ];
+        #});
+        runAsRoot = true;
+        swtpm.enable = true;
+      };
+    };*/
+  };
 
   services = {
     dbus.enable = true;
@@ -93,7 +150,8 @@
     };
 
     displayManager.sddm.enable = true;
-
+    displayManager.sddm.wayland.enable = true;
+    
     desktopManager.plasma6.enable = true;
 
     udev.packages = with pkgs; [
@@ -125,8 +183,6 @@
       extraCompatPackages = [ pkgs.proton-ge-bin ];
       enable = true;
     };
-
-    adb.enable = true;
 
     nix-ld.enable = true;
 
@@ -219,6 +275,10 @@
     ];
   };
 
+  powerManagement = {
+    enable = true;
+    cpuFreqGovernor = "performance";
+  };
 
  # qt.platformTheme = "qt5ct";
 

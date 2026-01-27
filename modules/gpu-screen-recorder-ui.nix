@@ -1,3 +1,5 @@
+# https://github.com/NixOS/nixpkgs/pull/369574
+
 { config, lib, pkgs, ... }:
 
 let

@@ -50,6 +50,8 @@
     moonlight-qt
     discord
     losslesscut-bin
+    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-lazer-bin
+    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-stable
   ];
 
  # programs.hyprcursor-phinger.enable = true;

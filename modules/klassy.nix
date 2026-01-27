@@ -1,4 +1,5 @@
 # https://github.com/NixOS/nixpkgs/issues/272566
+# https://github.com/NixOS/nixpkgs/pull/318772
 
 {
   lib,

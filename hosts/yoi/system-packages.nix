@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 {
  environment.systemPackages = with pkgs; [
+    telegram-desktop
 #    dunst
     cifs-utils
 #    virt-manager
@@ -31,5 +32,11 @@
     shared-mime-info
     xdg-utils
     protonup-qt
+    lsof
+    pciutils
+    scrot
+    ns-usbloader
+    lm_sensors
+    gamescope
   ];
 }
