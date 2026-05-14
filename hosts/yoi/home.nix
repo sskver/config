@@ -32,26 +32,31 @@
     any-nix-shell
     kdePackages.ark
     nodejs
-    nodePackages.pnpm
-    gpu-screen-recorder-gtk
+    #gpu-screen-recorder-gtk
     obsidian
     xivlauncher
     slack
     uxplay
     inputs.zen-browser.packages."${system}".default
-    (import ./../../modules/byar.nix { pkgs = pkgs; })
+    chromium
+    brave
+  #  (import ./../../modules/byar.nix { pkgs = pkgs; })
     remmina
     xorg.xrandr
     solaar
-    lsfg-vk-ui
+ #   lsfg-vk-ui
     deskflow
     vulkan-tools
     virt-manager
     moonlight-qt
     discord
     losslesscut-bin
-    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-lazer-bin
-    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-stable
+    vesktop
+    inputs.nix-gaming.packages."${system}".osu-lazer-bin
+#    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-stable
+    spotify
+    wootility
+    pnpm
   ];
 
  # programs.hyprcursor-phinger.enable = true;

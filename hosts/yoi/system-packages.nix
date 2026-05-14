@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 {
  environment.systemPackages = with pkgs; [
-    telegram-desktop
 #    dunst
     cifs-utils
 #    virt-manager
@@ -23,7 +22,7 @@
     p7zip
     ffmpeg
     mpv
-    wineWowPackages.staging
+    #wineWow64Packages.staging
     winetricks
 #    lxappearance
     git
@@ -31,12 +30,16 @@
     qjackctl
     shared-mime-info
     xdg-utils
-    protonup-qt
+    protonplus
     lsof
     pciutils
     scrot
     ns-usbloader
     lm_sensors
     gamescope
+    virt-viewer
+    egl-wayland
+    cage
+    waydroid-helper
   ];
 }

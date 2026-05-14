@@ -13,20 +13,46 @@ in
       inputs.spicetify-nix.nixosModules.default
       ../../modules/gpu-screen-recorder-ui.nix
     ];
- 
+
+
+  nix.buildMachines = [
+    {
+      hostName = "zseton";
+      sshUser = "skver";
+      system = "x86_64-linux";
+      maxJobs = 8; # or whatever your server can handle
+      speedFactor = 2; # higher = preferred
+      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" ];
+    }
+  ];
+
+  nix.settings.trusted-users = [ "root" "skver" ];
+  nix.distributedBuilds = true;
+  nix.settings.builders-use-substitutes = true;
+
+  networking.extraHosts =
+  ''
+    100.94.235.46 jenkins.local
+  '';
+
   nixpkgs.overlays = [
-    (final: prev: {
-      klassy = final.callPackage ../../modules/klassy.nix { };
-    })
     (final: prev: {
       gpu-screen-recorder-notification = final.callPackage ../../modules/gpu-screen-recorder-notification.nix { };
     })
     (final: prev: {
       discord = prev.discord.override {
-        withOpenASAR = true;
+       # withOpenASAR = true;
         withVencord = true;
       };
     })
+    # Skipping tests while upstream sorts it out, revert once
+    # Hydra consistently builds openldap green.
+    (final: prev: {
+      openldap = prev.openldap.overrideAttrs (_: {
+        doCheck = false;
+      });
+    })
+
   ];
 
   nix.settings = {
@@ -77,6 +103,9 @@ in
     wants = [ "systemd-udev-settle.service" ];
   };
 
+  systemd.services.tailscaled.serviceConfig.Environment = [ 
+    "TS_DEBUG_FIREWALL_MODE=nftables" 
+  ];
 
   boot = {
     loader = {
@@ -109,7 +138,7 @@ in
         "nvidia_drm.modeset=1"
         "amd_iommu=on" "kvm-amd.avic=1" "kvm_amd.nested=1" "kvm_amd.sev=1" 
         "acpi_enforce_resources=lax" 
-        #"pcie_acs_override=downstream,multifunction" 
+        "pcie_acs_override=downstream,multifunction" 
       #"quiet" "udev.log_level=0" 
         "video=DP-3:2560x1440@180"
         "video=DP-2:1920x1080@144,rotate=90"
@@ -128,8 +157,9 @@ in
   };
 
   virtualisation = {
+    waydroid.enable = true;
     docker.enable = true;
-    /*libvirtd = {
+    libvirtd = {
       enable = true;
       qemu = {
         #package = pkgs.qemu_kvm.overrideAttrs (attrs: {
@@ -137,11 +167,25 @@ in
         #});
         runAsRoot = true;
         swtpm.enable = true;
+      
+       /*
+        verbatimConfig = ''
+          cgroup_device_acl = [
+            "/dev/null", "/dev/full", "/dev/zero",
+            "/dev/random", "/dev/urandom",
+            "/dev/ptmx", "/dev/kvm", "/dev/nvidia0", "/dev/nvidiactl", "/dev/nvidia-modeset", "/dev/dri/renderD128"
+          ]
+          seccomp_sandbox = 0
+        '';*/
+        # P.S.: FUCK NVIDIA THE 12837839th TIME
       };
-    };*/
+    };
   };
 
   services = {
+    tailscale.enable = true;
+    tailscale.useRoutingFeatures = "both";
+
     dbus.enable = true;
 
     gnome = {
@@ -178,7 +222,6 @@ in
   };
 
   programs = {
-
     steam = {
       extraCompatPackages = [ pkgs.proton-ge-bin ];
       enable = true;
@@ -222,6 +265,7 @@ in
   };
 
   networking = {
+    nftables.enable = true;
     firewall.enable = false;
     hostName = "yoi";
     networkmanager.enable = true;
@@ -268,7 +312,6 @@ in
     };
     systemPackages = with pkgs; 
     [ 
-      klassy 
       gpu-screen-recorder-notification   
       kdePackages.breeze-icons
       kdePackages.breeze-gtk

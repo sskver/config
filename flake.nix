@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
     home-manager.url = "github:nix-community/home-manager";
 
@@ -21,7 +21,7 @@
     hyprlock.url = "github:hyprwm/Hyprlock";
     hypridle.url = "github:hyprwm/Hypridle";
     
-    zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    zen-browser.url = "github:0xc000022070/zen-browser-flake"; # broken :)))))
 
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
   };
