@@ -39,12 +39,12 @@ in
     (final: prev: {
       gpu-screen-recorder-notification = final.callPackage ../../modules/gpu-screen-recorder-notification.nix { };
     })
-    (final: prev: {
-      discord = prev.discord.override {
-       # withOpenASAR = true;
-        withVencord = true;
-      };
-    })
+#    (final: prev: {
+#      discord-canary = prev.discord-canary.override {
+#       # withOpenASAR = true;
+#        withVencord = true;
+#      };
+#    })
     # Skipping tests while upstream sorts it out, revert once
     # Hydra consistently builds openldap green.
     (final: prev: {
@@ -309,6 +309,7 @@ in
   environment = {
     sessionVariables = {
       NIXOS_OZONE_WL = "1";
+      __GL_SHADER_DISK_CACHE_SIZE = "107374182404";
     };
     systemPackages = with pkgs; 
     [ 
