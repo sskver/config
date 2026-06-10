@@ -29,7 +29,6 @@
   };
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.cudaSupport = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   networking.firewall.logRefusedConnections = false;
   xdg.mime.enable = true;

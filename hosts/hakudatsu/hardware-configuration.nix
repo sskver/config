@@ -8,32 +8,39 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usb_storage" "sd_mod" "aesni_intel" "cryptd" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/4a3b9b8a-44d2-4d9a-988e-c31fcccd5aae";
+    { device = "/dev/mapper/cryptroot";
       fsType = "btrfs";
-      options = [ "subvol=@" ];
+      options = [ "compress=zstd" "subvol=root" ];
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/E442-084E";
+    { device = "/dev/disk/by-uuid/46EE-EC1A";
       fsType = "vfat";
+      options = [ "fmask=0022" "dmask=0022" ];      
     };
 
-  swapDevices = [ ];
+  boot.initrd.luks.devices."cryptroot".device = "/dev/disk/by-uuid/efed61da-0e12-4b32-8fc0-47a6e82b1135";
 
-  # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
-  # (the default) this is the recommended approach. When using systemd-networkd it's
-  # still possible to use this option, but it's recommended to use it in conjunction
-  # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-  networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.wlp0s20f3.useDHCP = lib.mkDefault true;
+  fileSystems."/home" =
+    { device = "/dev/mapper/cryptroot";
+      fsType = "btrfs";
+      options = [ "compress=zstd" "subvol=home" ];
+    };
+
+  fileSystems."/nix" =
+    { device = "/dev/mapper/cryptroot";
+      fsType = "btrfs";
+      options = [ "compress=zstd" "noatime" "subvol=nix" ];
+    };
+
+  swapDevices = [ { device = "/swapfile"; size = 8*1024; } ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

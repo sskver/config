@@ -14,6 +14,8 @@ in
       ../../modules/gpu-screen-recorder-ui.nix
     ];
 
+  nixpkgs.config.cudaSupport = true;
+
 
   nix.buildMachines = [
     {

@@ -3,22 +3,6 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 { config, pkgs, ... }:
-let
-  configure-gtk = pkgs.writeTextFile {
-    name = "configure-gtk";
-    destination = "/bin/configure-gtk";
-    executable = true;
-    text = let
-      schema = pkgs.gsettings-desktop-schemas;
-      datadir = "${schema}/share/gsettings-schemas/${schema.name}";
-    in ''
-      export XDG_DATA_DIRS=${datadir}:$XDG_DATA_DIRS
-      gnome_schema=org.gnome.desktop.interface
-      gsettings set $gnome_schema gtk-theme 'Dracula'
-    '';
-  };
-
-in
 {
   imports =
     [
@@ -26,7 +10,29 @@ in
       ../../modules/nixos.nix
     ];
 
+  nix.buildMachines = [
+    {
+      hostName = "zseton";
+      sshUser = "skver";
+      system = "x86_64-linux";
+      maxJobs = 8; # or whatever your server can handle
+      speedFactor = 2; # higher = preferred
+      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" ];
+    }
+  ];
+
+  nix.settings.trusted-users = [ "root" "skver" ];
+  nix.distributedBuilds = true;
+  nix.settings.builders-use-substitutes = true;
+
+
+  nix.settings = {
+    substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org"];
+    trusted-public-keys = ["nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="];
+  };
+
   services.usbmuxd.enable = true;
+  powerManagement.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -38,27 +44,24 @@ in
 
   time.timeZone = "Europe/Budapest";
 
-  services.xserver.enable = true;
-  services.xserver.displayManager.gdm.enable = true;
-  
-  programs.hyprland.enable = true;
-    
-  # Configure keymap in X11
-  services.xserver = {
-    layout = "hu";
-    xkbVariant = "";
-  };
-
-  console.keyMap = "hu101";
-
   services.printing.enable = true;
 
-  services.xserver.libinput.enable = true;
-  services.xserver.libinput.touchpad.naturalScrolling = true;
+#  services.xserver.libinput.enable = true;
+#  services.xserver.libinput.touchpad.naturalScrolling = true;
+ 
   programs.fish.enable = true;
-  services.postgresql = {
-  enable = true;
-};
+  
+  services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.wayland.enable = true;
+  services.desktopManager.plasma6.enable = true;
+
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.kdePackages.xdg-desktop-portal-kde ];
+    config.common.default = [ "kde" ];
+  };
+
+
 # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.skver = {
     shell = pkgs.fish;
@@ -67,37 +70,37 @@ in
     extraGroups = [ "input" "networkmanager" "wheel" "docker" "video" ];
     packages = with pkgs; [
       firefox
-      kitty
-    #  thunderbird
+#      kitty
+#      thunderbird
     ];
   };
 
   environment.systemPackages = with pkgs; [
-     libimobiledevice
+     #libimobiledevice
      wget
      git
-     p7zip
+  #   p7zip
      fprintd
-     python311
-     sage
+     #python311
+     #sage
      brightnessctl
-     hyprpaper
-     wlr-randr
-     nwg-displays
-     swaylock
-     rpi-imager
-     pavucontrol
+     #hyprpaper
+     #wlr-randr
+     #nwg-displays
+     #swaylock
+     #rpi-imager
+     #pavucontrol
      htop
      glib
-     dracula-theme
-     gnome.adwaita-icon-theme
+     #dracula-theme
+     #gnome.adwaita-icon-theme
      xdg-utils
-     configure-gtk
-     gnome.nautilus
-     gnome.eog
-     wineWowPackages.waylandFull
-     winetricks
-     php
+     #configure-gtk
+     #gnome.nautilus
+     #gnome.eog
+     #wineWowPackages.waylandFull
+     #winetricks
+     #php
   ];
 
   services.fprintd = {
