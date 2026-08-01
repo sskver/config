@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
     nixcord.url = "github:FlameFlag/nixcord";
 
@@ -46,7 +46,7 @@
         specialArgs = { inherit inputs; };
       };
 
-      hakudatsu = nixpkgs.lib.nixosSystem {
+/*      hakudatsu = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           ./hosts/hakudatsu/configuration.nix
@@ -60,6 +60,7 @@
         ];
         specialArgs = { inherit inputs; };
        };
+*/
     };
   };
 }

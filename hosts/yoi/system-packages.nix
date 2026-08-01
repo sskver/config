@@ -41,5 +41,7 @@
     egl-wayland
     cage
     waydroid-helper
+    gnupg
+    pinentry-qt
   ];
 }

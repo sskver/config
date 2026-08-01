@@ -11,7 +11,13 @@
   
   home.stateVersion = "23.05"; 
   home.packages = with pkgs; [
-    thunderbird
+    openrgb
+    uv
+    blender 
+    claude-code
+    nixd
+    nil
+    #thunderbird
     wine-staging
     gcc
     zed-editor
@@ -19,12 +25,12 @@
     gopls
     golangci-lint
     crosspipe
- #   grim
- #   slurp
- #   wl-clipboard
- #   waybar
- #   hyprpaper
- #   pywal
+    grim
+    slurp
+    wl-clipboard
+    waybar
+    hyprpaper
+    pywal
     vscode
     audacity
     prismlauncher
@@ -40,18 +46,17 @@
     mangohud
     any-nix-shell
     kdePackages.ark
-    nodejs
     #gpu-screen-recorder-gtk
     obsidian
     xivlauncher
     slack
     uxplay
     inputs.zen-browser.packages."${system}".default
-    chromium
+   # chromium
     brave
   #  (import ./../../modules/byar.nix { pkgs = pkgs; })
     remmina
-    xorg.xrandr
+    xrandr
     solaar
  #   lsfg-vk-ui
     deskflow
@@ -60,17 +65,17 @@
     moonlight-qt
    # discord-canary
     losslesscut-bin
-    vesktop
+   # vesktop
     inputs.nix-gaming.packages."${system}".osu-lazer-bin
 #    inputs.nix-gaming.packages.${pkgs.stdenv.hostPlatform.system}.osu-stable
     spotify
     wootility
-    pnpm
   ];
 
   programs.nixcord = {
     enable = true;
-    discord.vencord.enable = true;
+    openASAR.enable = false;
+    discord.equicord.enable = true;
     discord.branch = "canary";
     config.plugins = {
       crashHandler = {
@@ -82,11 +87,6 @@
       experiments = {
         enable = true;
         toolbarDevMenu = false;
-      };
-
-      favoriteGifSearch = {
-        enable = true;
-        searchOption = "url";
       };
 
       fixImagesQuality = {
@@ -109,10 +109,10 @@
         statusName = "some music";
         nameFormat = "status-name";
         useListeningStatus = false;
-        missingArt = "lastfmLogo";
+        missingArt = "logo";
         username = "skver0";
-        apiKey = "a36c1ce0a44a02d62d688ddaf66ef14d";
-        showLastFmLogo = true;
+        apiKey = "a36c1ce0a44a02d62d688ddaf66ef14d"; # revoked btw, lmao, stupid moment
+        showLogo = true;
         hideWithActivity = false;
         statusDisplayType = "off";
         clickableLinks = true;
@@ -168,13 +168,6 @@
 
       reverseImageSearch = {
         enable = true;
-      };
-
-      spotifyControls = {
-        enable = true;
-        hoverControls = false;
-        useSpotifyUris = false;
-        previousButtonRestartsTrack = true;
       };
 
       translate = {
@@ -239,15 +232,9 @@
       };
     };
 
-/*    userPlugins = {
-      groupDms = "github:skver0/vencord-group-dms/d8df08cc1b3668cba7684dc1d291a12308177540";
-    };
-    extraConfig.plugins = {
-      groupDms.enable = true;
-    };*/
   };
 
- # programs.hyprcursor-phinger.enable = true;
+  programs.hyprcursor-phinger.enable = true;
  /* 
   programs.hyprlock = {
     enable = false;
@@ -281,8 +268,8 @@
 #    ".config/polybar".source = ../../home/polybar;
 #    ".config/rofi".source = ../../home/rofi;
 #    ".config/alacritty".source = ../../home/alacritty;
-#    ".config/hypr".source = ../../home/hypr;
-#    ".config/waybar".source = ../../home/waybar;
+    ".config/hypr".source = ../../home/hypr;
+    ".config/waybar".source = ../../home/waybar;
   };
 
   xdg.enable = true;

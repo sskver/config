@@ -7,11 +7,11 @@ stdenv.mkDerivation {
   src = fetchFromGitHub {
     owner = "frankcrawford";
     repo = "it87";
-    rev = "a9eb2495220cba861ef3df63fa15265e878293b6";
+    rev = "20f2f2f4c92c14fcdd26f60d050e693ad2c30bf8";
     sha256 = "sha256-iWyOctK+TFhVCOw2LiV4NiNFEAqNXOpSdGY//VwO8Ko=";
   };
 
-  nativeBuildInputs = [ kernel.dev kernel.moduleBuildDependencies ];
+  nativeBuildInputs = [ kernel.dev ] ++ kernel.moduleBuildDependencies;
 
   buildPhase = ''
     make clean modules KERNEL_BUILD=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build

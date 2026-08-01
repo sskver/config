@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
 let
   it87-frankcrawford = pkgs.callPackage ../../modules/it87-frankcrawford.nix {
-    kernel = pkgs.linuxPackages_zen.kernel;
+    kernel = config.boot.kernelPackages.kernel;
   };
 in
 {
@@ -11,19 +11,70 @@ in
       ./system-packages.nix
       ../../modules/nixos.nix
       inputs.spicetify-nix.nixosModules.default
-      ../../modules/gpu-screen-recorder-ui.nix
+#      ../../modules/gpu-screen-recorder-ui.nix
     ];
 
-  nixpkgs.config.cudaSupport = true;
+  nixpkgs.config.cudaSupport = false;
 
+
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.ipv4_forward" = 1;
+    "net.ipv4.conf.all.rp_filter" = 2;
+    "net.ipv4.conf.default.rp_filter" = 2;
+  };
+
+  networking.nftables = {
+    enable = true;
+  };
+
+
+   systemd.services.tailscaled = {
+    serviceConfig = {
+      ExecStartPre = lib.mkBefore [
+        (pkgs.writeShellScript "tailscaled-nft-start" ''
+          ${pkgs.nftables}/bin/nft -f - <<'EOF'
+          table inet mullvad-ts {
+            chain outgoing {
+              type route hook output priority 0; policy accept;
+              ip daddr 100.64.0.0/10 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
+              ip6 daddr fd7a:115c:a1e0::/48 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
+            }
+
+            chain incoming {
+              type filter hook input priority -100; policy accept;
+              iifname "tailscale0" ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
+            }
+
+            chain excludeDns {
+              type filter hook output priority -10; policy accept;
+              ip daddr 100.100.100.100 udp dport 53 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
+              ip daddr 100.100.100.100 tcp dport 53 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
+            }
+          }
+          EOF
+        '')
+      ];
+
+      ExecStopPost = lib.mkAfter [
+        (pkgs.writeShellScript "tailscaled-nft-stop" ''
+          ${pkgs.nftables}/bin/nft delete table inet mullvad-ts || true
+        '')
+      ];
+    };
+  };
+
+  systemd.services.mullvad-daemon = {
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+  };
 
   nix.buildMachines = [
     {
-      hostName = "zseton";
+      hostName = "yelena";
       sshUser = "skver";
       system = "x86_64-linux";
-      maxJobs = 8; # or whatever your server can handle
-      speedFactor = 2; # higher = preferred
+      maxJobs = 8;
+      speedFactor = 2;
       supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" ];
     }
   ];
@@ -32,34 +83,25 @@ in
   nix.distributedBuilds = true;
   nix.settings.builders-use-substitutes = true;
 
-  networking.extraHosts =
-  ''
-    100.94.235.46 jenkins.local
-  '';
+#  networking.extraHosts =
+#  ''
+#  '';
 
   nixpkgs.overlays = [
-    (final: prev: {
-      gpu-screen-recorder-notification = final.callPackage ../../modules/gpu-screen-recorder-notification.nix { };
-    })
+ #   (final: prev: {
+ #     gpu-screen-recorder-notification = final.callPackage ../../modules/gpu-screen-recorder-notification.nix { };
+ #   })
 #    (final: prev: {
 #      discord-canary = prev.discord-canary.override {
 #       # withOpenASAR = true;
 #        withVencord = true;
 #      };
 #    })
-    # Skipping tests while upstream sorts it out, revert once
-    # Hydra consistently builds openldap green.
-    (final: prev: {
-      openldap = prev.openldap.overrideAttrs (_: {
-        doCheck = false;
-      });
-    })
-
   ];
 
   nix.settings = {
-    substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org"];
-    trusted-public-keys = ["nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="];
+    substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org" "https://cuda-maintainers.cachix.org"];
+    trusted-public-keys = ["nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=" "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="];
   };
 
   hardware = {
@@ -156,6 +198,7 @@ in
   security = {
     sudo.wheelNeedsPassword = false;
     polkit.enable = true;
+    polkit.enablePkexecWrapper = true;
   };
 
   virtualisation = {
@@ -184,10 +227,33 @@ in
     };
   };
 
+#  networking.nameservers = [ "100.100.100.100" ];
+#  networking.search = [ "macaroni-escalator.ts.net" ];
+
   services = {
+    resolved = {
+      enable = true;
+      settings.Resolve = {
+        DNSSEC = "true";
+        Domains = [ "~." ];
+        DNSOverTLS = "true";
+        FallbackDNS = [
+          "1.1.1.1"
+          "1.0.0.1"
+        ];
+      };
+    };
     tailscale.enable = true;
     tailscale.useRoutingFeatures = "both";
+    tailscale.extraUpFlags = [
+       "--accept-dns=true"
+       "--operator skver"
+    ];
 
+    mullvad-vpn = {
+      enable = true;
+      gui.enable = true;
+    };
     dbus.enable = true;
 
     gnome = {
@@ -253,11 +319,11 @@ in
 
     fish.enable = true;
 
-    gpu-screen-recorder = {
-      enable = true;
-    };
+   # gpu-screen-recorder = {
+   #   enable = true;
+   # };
 
-    gpu-screen-recorder-ui.enable = true;
+   # gpu-screen-recorder-ui.enable = true;
   };
 
   xdg.portal = {
@@ -267,7 +333,6 @@ in
   };
 
   networking = {
-    nftables.enable = true;
     firewall.enable = false;
     hostName = "yoi";
     networkmanager.enable = true;
@@ -295,7 +360,7 @@ in
       device = "//192.168.0.104/pool";
       fsType = "cifs";
       options = let
-        automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,gid=1000,uid=1000";
+         automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,gid=1000,uid=1000";
       in ["${automount_opts},credentials=/smb-secrets"];
     };
   };
@@ -315,7 +380,7 @@ in
     };
     systemPackages = with pkgs; 
     [ 
-      gpu-screen-recorder-notification   
+     # gpu-screen-recorder-notification   
       kdePackages.breeze-icons
       kdePackages.breeze-gtk
     ];
@@ -328,6 +393,11 @@ in
 
  # qt.platformTheme = "qt5ct";
 
+  services.dbus.packages = [pkgs.gcr];
+  programs.gnupg.agent = {
+    enable = true;
+  };
+  
   system.stateVersion = "22.11"; # Did you read the comment? yes, dont change this value unless you know what you are doing
 }
 
