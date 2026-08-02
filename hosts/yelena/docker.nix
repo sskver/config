@@ -53,24 +53,6 @@
         ports = ["8001:8000"];
         environmentFiles = [ config.sops.secrets."ddns-config-env".path ];
       };
-#      "nginx-proxy-manager" = {
-#        image = "jc21/nginx-proxy-manager:2.12.3";
-#        autoStart = true;
-#        extraOptions = [
-#          "--pull=always"
-#        ];
-#        ports = [
-#          "8002:81" 
-#          "443:443"
-#          "80:80"
-#        ];
-#        volumes = [
-#          "nginx-proxy-data:/data"
-#          "letsencrypt:/etc/letsencrypt"
-#          "/mnt/pool/w2k:/mnt"
-#        ];
-#      };
-# absolute dogshit above btw
       "nginxui" = {
         image = "uozi/nginx-ui:latest";
         autoStart = true;
@@ -221,20 +203,7 @@
         ];
         ports = ["8007:3000"];
         dependsOn = [ "registry" ];
-      }; 
-#      "postgres" = {
-#        image = "pgvector/pgvector:0.8.0-pg16";
-#        autoStart = true;
-#        extraOptions = [
-#          "--pull=always"
-#        ];
-#        ports = ["5432:5432"];
-#        environment = {
-#          "POSTGRES_USER" = "postgres";
-#          "POSTGRES_PASSWORD" = "postgres";
-#        };
-#        volumes = [ "/mnt/pool/postgres:/var/lib/postgresql/data" ];
-#      }; 
+      };
       "jellyseerr" = {
         image = "fallenbagel/jellyseerr:latest";
         autoStart = true;
@@ -382,30 +351,6 @@
           "TZ" = "Europe/Budapest";
         };
       };
-      # docker run --gpus all -d -it -p 8848:8888 -v $(pwd)/data:/home/jovyan/work -e GRANT_SUDO=yes -e JUPYTER_ENABLE_LAB=yes --user root cschranz/gpu-jupyter:v1.9_cuda-12.6_ubuntu-24.04
-      /*
-      "cuda-linux" = {
-        image = "nvidia/cuda:12.9.1-cudnn-runtime-ubuntu24.04";
-        autoStart = true;
-        extraOptions = [
-          "--pull=always"
-          "--device=nvidia.com/gpu=all"
-          "--privileged"
-        ];
-        ports = [
-          "27015:27015"
-          "27015:27015/udp"
-          "27005:27005/udp"
-        ];
-        environment = {
-          "NVIDIA_VISIBLE_DEVICES" = "all";
-         };
-        volumes = [ 
-          "/mnt/pool/docker-data/cuda-linux:/mnt"
-          "/mnt/pool/garrysmod-server:/garrysmod-server"
-        ];
-        cmd = [ "bash" "-c" "while true; do sleep 1000; done" ];
-      };*/
 
       "node-exporter" = {
         image = "prom/node-exporter:latest";

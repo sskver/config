@@ -1,5 +1,7 @@
-{ config, pkgs, lib, inputs, ... }: 
+{ config, pkgs, lib, inputs, ... }:
 {
+  imports = [ ./common.nix ];
+
   services.fstrim.enable = true;
   fonts.fontconfig.allowBitmaps = true;
   fonts.fontconfig.enable = true;
@@ -28,8 +30,6 @@
     dates = "daily";
   };
 
-  nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   networking.firewall.logRefusedConnections = false;
   xdg.mime.enable = true;
 
@@ -38,24 +38,7 @@
    dates = "weekly";
    options = "--delete-older-than 10d";
   };
-/*
-  # nightlight
-  #services.geoclue2.appConfig.redshift.isAllowed = true;
-  location.provider = "geoclue2";
-  services.geoclue2.geoProviderUrl = "https://api.beacondb.net/v1/geolocate";
 
-  services.redshift = {
-    enable = false;
-    brightness = {
-      day = "1";
-      night = "1";
-    };
-    temperature = {
-      day = 6500;
-      night = 3700;
-    };
-  };
-*/
   # pipest wire, audio
   security.rtkit.enable = true;
   services.pipewire = {

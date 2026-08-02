@@ -21,21 +21,13 @@ in
     mode = "0400";
   };
 
-  nixpkgs.config.cudaSupport = true;
-
-
   boot.kernel.sysctl = {
     "net.ipv4.conf.ipv4_forward" = 1;
     "net.ipv4.conf.all.rp_filter" = 2;
     "net.ipv4.conf.default.rp_filter" = 2;
   };
 
-  networking.nftables = {
-    enable = true;
-  };
-
-
-   systemd.services.tailscaled = {
+  systemd.services.tailscaled = {
     serviceConfig = {
       ExecStartPre = lib.mkBefore [
         (pkgs.writeShellScript "tailscaled-nft-start" ''
@@ -88,25 +80,8 @@ in
     }
   ];
 
-  nix.settings.trusted-users = [ "root" "skver" ];
   nix.distributedBuilds = true;
   nix.settings.builders-use-substitutes = true;
-
-#  networking.extraHosts =
-#  ''
-#  '';
-
-  nixpkgs.overlays = [
- #   (final: prev: {
- #     gpu-screen-recorder-notification = final.callPackage ../../modules/gpu-screen-recorder-notification.nix { };
- #   })
-#    (final: prev: {
-#      discord-canary = prev.discord-canary.override {
-#       # withOpenASAR = true;
-#        withVencord = true;
-#      };
-#    })
-  ];
 
   nix.settings = {
     substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org" "https://cuda-maintainers.cachix.org"];
@@ -156,19 +131,9 @@ in
     wants = [ "systemd-udev-settle.service" ];
   };
 
-  systemd.services.tailscaled.serviceConfig.Environment = [ 
-    "TS_DEBUG_FIREWALL_MODE=nftables" 
-  ];
-
   boot = {
-    loader = {
-      systemd-boot = {
-        enable = true;
-        configurationLimit = 2;
-      };
-      efi.canTouchEfiVariables = true;
-    };
-    supportedFilesystems = [ "ntfs" ];  
+    loader.systemd-boot.configurationLimit = 2;
+    supportedFilesystems = [ "ntfs" ];
 
     extraModulePackages = [
       it87-frankcrawford
@@ -205,7 +170,6 @@ in
   };
 
   security = {
-    sudo.wheelNeedsPassword = false;
     polkit.enable = true;
     polkit.enablePkexecWrapper = true;
   };
@@ -216,28 +180,11 @@ in
     libvirtd = {
       enable = true;
       qemu = {
-        #package = pkgs.qemu_kvm.overrideAttrs (attrs: {
-        #  patches = attrs.patches or [] ++ [ ../../patches/qemu-hide-hypervisor-bit.patch ];
-        #});
         runAsRoot = true;
         swtpm.enable = true;
-      
-       /*
-        verbatimConfig = ''
-          cgroup_device_acl = [
-            "/dev/null", "/dev/full", "/dev/zero",
-            "/dev/random", "/dev/urandom",
-            "/dev/ptmx", "/dev/kvm", "/dev/nvidia0", "/dev/nvidiactl", "/dev/nvidia-modeset", "/dev/dri/renderD128"
-          ]
-          seccomp_sandbox = 0
-        '';*/
-        # P.S.: FUCK NVIDIA THE 12837839th TIME
       };
     };
   };
-
-#  networking.nameservers = [ "100.100.100.100" ];
-#  networking.search = [ "macaroni-escalator.ts.net" ];
 
   services = {
     resolved = {
@@ -252,8 +199,6 @@ in
         ];
       };
     };
-    tailscale.enable = true;
-    tailscale.useRoutingFeatures = "both";
     tailscale.extraUpFlags = [
        "--accept-dns=true"
        "--operator skver"
@@ -280,8 +225,6 @@ in
       openrgb
       logitech-udev-rules
     ];
-
-    xserver.videoDrivers = ["nvidia"];
 
     #blueman.enable = true;
 
@@ -342,7 +285,6 @@ in
   };
 
   networking = {
-    firewall.enable = false;
     hostName = "yoi";
     networkmanager.enable = true;
   };
@@ -387,9 +329,7 @@ in
       NIXOS_OZONE_WL = "1";
       __GL_SHADER_DISK_CACHE_SIZE = "107374182404";
     };
-    systemPackages = with pkgs; 
-    [ 
-     # gpu-screen-recorder-notification   
+    systemPackages = with pkgs; [
       kdePackages.breeze-icons
       kdePackages.breeze-gtk
     ];
@@ -399,8 +339,6 @@ in
     enable = true;
     cpuFreqGovernor = "performance";
   };
-
- # qt.platformTheme = "qt5ct";
 
   services.dbus.packages = [pkgs.gcr];
   programs.gnupg.agent = {

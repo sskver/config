@@ -1,9 +1,13 @@
+# All SMART -> Discord monitoring lives here: an event-driven per-device
+# smartd hook (fires the moment smartd flags an actual issue) plus a daily
+# heartbeat poll (so you get a "still alive" status even when nothing's
+# wrong). Previously split across this file and modules/smartWebhook.nix
+# as two independently-evolved copies of near-identical code.
 { config, lib, pkgs, ... }:
 
 let
   discordPost = import ./lib/discordPost.nix { inherit pkgs; };
 
-  # Script lives in the Nix store
   smartdDiscordNotify = pkgs.writeShellScriptBin "smartdDiscordNotify" ''
     #!${pkgs.bash}/bin/bash
       : "''${WEBHOOK_URL:?WEBHOOK_URL not set}"
@@ -26,11 +30,31 @@ let
 
       echo "$JSON" | ${discordPost}/bin/discord-post
   '';
+
+  smartDailyCheck = pkgs.writeShellScriptBin "smartDailyCheck" ''
+    #!${pkgs.bash}/bin/bash
+    : "''${WEBHOOK_URL:?WEBHOOK_URL not set}"
+    HOSTNAME=$(< /proc/sys/kernel/hostname)
+    DATE=$(${pkgs.coreutils}/bin/date --iso-8601=seconds)
+
+    OUTPUT=$(for dev in /dev/sd?; do
+        ${pkgs.smartmontools}/bin/smartctl -H $dev 2>/dev/null | grep "SMART overall-health" | ${pkgs.gawk}/bin/gawk -v d="$dev" '{print d ": " $6}'
+    done)
+
+    JSON=$(${pkgs.jq}/bin/jq -n \
+        --arg title "SMART Status: $HOSTNAME" \
+        --arg description "$OUTPUT" \
+        --arg timestamp "$DATE" \
+        '{embeds:[{title:$title, description:$description, color:15105570, timestamp:$timestamp}]}'
+    )
+
+    echo "$JSON" | ${discordPost}/bin/discord-post
+  '';
 in
 {
   sops.secrets."discord-webhook-env" = { };
 
-  environment.systemPackages = [ smartdDiscordNotify ];
+  environment.systemPackages = [ smartdDiscordNotify smartDailyCheck ];
 
   systemd.services.smartd.serviceConfig.EnvironmentFile = config.sops.secrets."discord-webhook-env".path;
 
@@ -69,5 +93,23 @@ in
 
     # defaults for all devices
     defaults.monitored = "-a -o on -s (S/../.././02|L/../../7/04)";
+  };
+
+  systemd.services.smart-discord = {
+    description = "Check SMART and send to Discord";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${smartDailyCheck}/bin/smartDailyCheck";
+      EnvironmentFile = config.sops.secrets."discord-webhook-env".path;
+    };
+  };
+
+  systemd.timers.smart-discord = {
+    description = "Run SMART check every day at 8am";
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+    };
+    wantedBy = [ "timers.target" ];
   };
 }
