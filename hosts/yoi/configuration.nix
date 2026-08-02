@@ -10,11 +10,18 @@ in
       ./hardware-configuration.nix
       ./system-packages.nix
       ../../modules/nixos.nix
+      ../../modules/sops.nix
       inputs.spicetify-nix.nixosModules.default
 #      ../../modules/gpu-screen-recorder-ui.nix
     ];
 
-  nixpkgs.config.cudaSupport = false;
+  sops.defaultSopsFile = ../../secrets/yoi.yaml;
+  sops.secrets."smb-credentials" = {
+    owner = "root";
+    mode = "0400";
+  };
+
+  nixpkgs.config.cudaSupport = true;
 
 
   boot.kernel.sysctl = {
@@ -70,7 +77,9 @@ in
 
   nix.buildMachines = [
     {
-      hostName = "yelena";
+      # yelena's sshd listens on 2222, not the default 22 (see ~/.ssh/config);
+      # nix.buildMachines has no separate port option, so it goes in hostName
+      hostName = "yelena:2222";
       sshUser = "skver";
       system = "x86_64-linux";
       maxJobs = 8;
@@ -361,7 +370,7 @@ in
       fsType = "cifs";
       options = let
          automount_opts = "x-systemd.automount,noauto,x-systemd.idle-timeout=60,x-systemd.device-timeout=5s,x-systemd.mount-timeout=5s,gid=1000,uid=1000";
-      in ["${automount_opts},credentials=/smb-secrets"];
+      in ["${automount_opts},credentials=${config.sops.secrets."smb-credentials".path}"];
     };
   };
 

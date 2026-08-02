@@ -1,0 +1,17 @@
+keys:
+  - &admin_skver age1h0jc97m3mvnr605569k3nzuserdugflqsuzpjs9fvczdu39atsvsdnsxs4
+  - &host_yoi    age1cye5zwf7e9vhg4jarm86cze0nvap0cptwgfpexd5zct64awpkvhsajrt0t
+  - &host_yelena age1aat7muxurynftt33dvfa3pw8ftzq6thvtlux73rtkqnj95nzt95qy5wxrq
+
+creation_rules:
+  - path_regex: secrets/yoi\.yaml$
+    key_groups:
+      - age:
+          - *admin_skver
+          - *host_yoi
+
+  - path_regex: secrets/yelena\.yaml$
+    key_groups:
+      - age:
+          - *admin_skver
+          - *host_yelena
