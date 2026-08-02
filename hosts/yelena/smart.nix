@@ -1,11 +1,13 @@
 { config, lib, pkgs, ... }:
 
 let
+  discordPost = import ./lib/discordPost.nix { inherit pkgs; };
+
   # Script lives in the Nix store
   smartdDiscordNotify = pkgs.writeShellScriptBin "smartdDiscordNotify" ''
     #!${pkgs.bash}/bin/bash
       : "''${WEBHOOK_URL:?WEBHOOK_URL not set}"
-      HOSTNAME=$(hostname)
+      HOSTNAME=$(< /proc/sys/kernel/hostname)
       DATE=$(${pkgs.coreutils}/bin/date --iso-8601=seconds)
 
       # smartd passes these environment variables
@@ -22,7 +24,7 @@ let
           '{embeds:[{title:$title, fields:[{name:"Device",value:$dev,inline:true},{name:"Event",value:$event,inline:true},{name:"Details",value:$message,inline:false}],color:15105570,timestamp:$timestamp}]}'
       )
 
-      ${pkgs.curl}/bin/curl -s -H "Content-Type: application/json" -d "$JSON" "$WEBHOOK_URL"
+      echo "$JSON" | ${discordPost}/bin/discord-post
   '';
 in
 {

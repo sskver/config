@@ -1,6 +1,8 @@
 { config, lib, pkgs, ... }:
 
 let
+  discordPost = import ./lib/discordPost.nix { inherit pkgs; };
+
   borgDiscord = pkgs.writeShellScriptBin "borg-discord" ''
     #!${pkgs.bash}/bin/bash
 
@@ -10,8 +12,6 @@ let
     DURATION="$4"
     FILES="$5"
     SIZE="$6"
-
-    : "''${WEBHOOK_URL:?WEBHOOK_URL not set}"
 
     case "$STATUS" in
       STARTED)
@@ -84,7 +84,7 @@ let
       )
     fi
 
-    ${pkgs.curl}/bin/curl -s -H "Content-Type: application/json" -d "$JSON" "$WEBHOOK_URL" || true
+    echo "$JSON" | ${discordPost}/bin/discord-post || true
   '';
 
   common-excludes = [

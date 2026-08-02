@@ -1,11 +1,13 @@
 { config, pkgs, ... }:
 
 let
+  discordPost = import ../lib/discordPost.nix { inherit pkgs; };
+
   smartWebhook = pkgs.writeShellScriptBin "smartWebhook" ''
     #!${pkgs.bash}/bin/bash
     : "''${WEBHOOK_URL:?WEBHOOK_URL not set}"
-    HOSTNAME=$(hostname)
-    DATE=$(date --iso-8601=seconds)
+    HOSTNAME=$(< /proc/sys/kernel/hostname)
+    DATE=$(${pkgs.coreutils}/bin/date --iso-8601=seconds)
 
     OUTPUT=$(for dev in /dev/sd?; do
         ${pkgs.smartmontools}/bin/smartctl -H $dev 2>/dev/null | grep "SMART overall-health" | ${pkgs.gawk}/bin/gawk -v d="$dev" '{print d ": " $6}'
@@ -18,7 +20,7 @@ let
         '{embeds:[{title:$title, description:$description, color:15105570, timestamp:$timestamp}]}'
     )
 
-    ${pkgs.curl}/bin/curl -s -H "Content-Type: application/json" -d "$JSON" "$WEBHOOK_URL"
+    echo "$JSON" | ${discordPost}/bin/discord-post
   '';
 in
 {
