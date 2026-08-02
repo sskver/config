@@ -142,8 +142,6 @@ let
   };
 in
 {
-  # basicBorgJob sets `user = "skver"`, so the passCommand's `cat` needs
-  # to run as skver, not root (sops-nix default owner)
   sops.secrets."borg-passphrase".owner = "skver";
   sops.secrets."discord-webhook-env" = { };
 
@@ -151,11 +149,6 @@ in
     local-backup = basicBorgJob "local-backup" // rec {
       paths = [ "/mnt/pool/local-backup" ];
     };
-
-    # dropped the "nix" job: /mnt/pool/nix is no longer the source of
-    # truth for yelena's config (superseded by the git-tracked flake at
-    # /etc/nixos on yoi, deployed via --target-host); GitHub is the real
-    # backup for it now
 
     hath = basicBorgJob "hath" // rec {
       paths = [ "/mnt/pool/hath" ];

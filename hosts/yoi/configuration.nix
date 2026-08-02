@@ -69,8 +69,6 @@ in
 
   nix.buildMachines = [
     {
-      # yelena's sshd listens on 2222, not the default 22 (see ~/.ssh/config);
-      # nix.buildMachines has no separate port option, so it goes in hostName
       hostName = "yelena:2222";
       sshUser = "skver";
       system = "x86_64-linux";

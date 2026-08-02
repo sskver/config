@@ -1,8 +1,3 @@
-# All SMART -> Discord monitoring lives here: an event-driven per-device
-# smartd hook (fires the moment smartd flags an actual issue) plus a daily
-# heartbeat poll (so you get a "still alive" status even when nothing's
-# wrong). Previously split across this file and modules/smartWebhook.nix
-# as two independently-evolved copies of near-identical code.
 { config, lib, pkgs, ... }:
 
 let

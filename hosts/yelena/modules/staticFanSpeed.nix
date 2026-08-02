@@ -1,7 +1,3 @@
-# The static counterpart to gpuFanControl.nix: pins the NCT6775 fan at a
-# fixed PWM value instead of driving it off a temperature curve. Both write
-# to the same sysfs pwm path, so they're mutually exclusive — asserted below
-# rather than left to race silently if both ever get enabled at once.
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -45,8 +41,6 @@ with lib;
     systemd.services.set-nct-fan-speed = {
       description = "Configure NCT6775 Fan Speed";
 
-      # Small loop to wait for the sysfs files to appear, ensuring hardware
-      # is ready before writing (driver can load late).
       script = ''
         PATH=$PATH:/run/current-system/sw/bin
 
@@ -58,7 +52,6 @@ with lib;
         echo ${toString config.services.staticFanSpeed.pwmValue} > ${config.services.staticFanSpeed.pwmPath}
       '';
 
-      # Run after basic system initialization, before local filesystems
       wantedBy = [ "multi-user.target" ];
       before = [ "local-fs.target" ];
     };

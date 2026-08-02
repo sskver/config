@@ -17,9 +17,6 @@
 
   sops.defaultSopsFile = ../../secrets/yelena.yaml;
 
-  # dynamic GPU-temp-driven curve (modules/gpuFanControl.nix) vs. fixed
-  # speed (modules/staticFanSpeed.nix) - mutually exclusive, see the
-  # assertion in staticFanSpeed.nix
   hardware.gpuFanControl.enable = false;
   services.staticFanSpeed.enable = true;
 
