@@ -43,6 +43,12 @@
         volumes = [
           "/var/lib/docker-registry:/var/lib/registry:rw"
         ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "Docker Registry";
+          "homepage.icon" = "docker.png";
+          "homepage.href" = "http://192.168.0.104:5000";
+        };
       };
       "ddns-updater" = {
         image = "qmcgaw/ddns-updater:latest";
@@ -52,6 +58,12 @@
         ];
         ports = ["8001:8000"];
         environmentFiles = [ config.sops.secrets."ddns-config-env".path ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "DDNS Updater";
+          "homepage.icon" = "ddns-updater.png";
+          "homepage.href" = "http://192.168.0.104:8001";
+        };
       };
       "nginxui" = {
         image = "uozi/nginx-ui:latest";
@@ -59,6 +71,12 @@
         extraOptions = [
           "--pull=always"
         ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "Nginx UI";
+          "homepage.icon" = "nginx.png";
+          "homepage.href" = "http://192.168.0.104:8002";
+        };
         environment = {
           "TZ" = "Europe/Budapest";
            #NGINX_UI_IGNORE_DOCKER_SOCKET: true
@@ -108,6 +126,12 @@
           "UMASK" = "000";
           "FLOOD_AUTH" = "false";
         };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Flood";
+          "homepage.icon" = "flood.png";
+          "homepage.href" = "http://192.168.0.104:3000";
+        };
       };
       "jellyfin" = {
         image = "linuxserver/jellyfin:latest";
@@ -126,6 +150,12 @@
           "jellyfin-data:/config"
           "/mnt/pool/torrents:/mnt"
         ];
+        labels = {
+          "homepage.group" = "Media";
+          "homepage.name" = "Jellyfin";
+          "homepage.icon" = "jellyfin.png";
+          "homepage.href" = "http://192.168.0.104:8096";
+        };
       };
       "pihole" = {
         image = "pihole/pihole:latest";
@@ -146,6 +176,12 @@
           "pihole-data:/etc/pihole"
           "pihole-dns:/etc/dnsmasq.d"
         ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "Pi-hole";
+          "homepage.icon" = "pi-hole.png";
+          "homepage.href" = "http://192.168.0.104:8003/admin";
+        };
       };
       "prowlarr" = {
         image = "linuxserver/prowlarr:latest";
@@ -160,6 +196,12 @@
           "PGID" = "1000";
           "TZ" = "Europe/Budapest";
         };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Prowlarr";
+          "homepage.icon" = "prowlarr.png";
+          "homepage.href" = "http://192.168.0.104:8004";
+        };
       };
       "sonarr" = {
         image = "linuxserver/sonarr:latest";
@@ -168,7 +210,7 @@
           "--pull=always"
         ];
         ports = ["8005:8989"];
-        volumes = [ 
+        volumes = [
           "sonarr-data:/config"
           "/mnt/pool/torrents:/mnt"
         ];
@@ -176,6 +218,12 @@
           "PUID" = "1000";
           "PGID" = "1000";
           "TZ" = "Europe/Budapest";
+        };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Sonarr";
+          "homepage.icon" = "sonarr.png";
+          "homepage.href" = "http://192.168.0.104:8005";
         };
       };
       "radarr" = {
@@ -185,7 +233,7 @@
           "--pull=always"
         ];
         ports = ["8006:7878"];
-        volumes = [ 
+        volumes = [
           "radarr-data:/config"
           "/mnt/pool/torrents:/mnt"
         ];
@@ -193,6 +241,12 @@
           "PUID" = "1000";
           "PGID" = "1000";
           "TZ" = "Europe/Budapest";
+        };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Radarr";
+          "homepage.icon" = "radarr.png";
+          "homepage.href" = "http://192.168.0.104:8006";
         };
       };
       "skverspace" = {
@@ -203,6 +257,12 @@
         ];
         ports = ["8007:3000"];
         dependsOn = [ "registry" ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "skver.space";
+          "homepage.icon" = "mdi-web";
+          "homepage.href" = "http://192.168.0.104:8007";
+        };
       };
       "jellyseerr" = {
         image = "fallenbagel/jellyseerr:latest";
@@ -215,6 +275,12 @@
         };
         ports = ["8008:5055"];
         volumes = [ "jellyseerr-data:/app/config" ];
+        labels = {
+          "homepage.group" = "Media";
+          "homepage.name" = "Jellyseerr";
+          "homepage.icon" = "jellyseerr.png";
+          "homepage.href" = "http://192.168.0.104:8008";
+        };
       };
       "forgejo" = {
         image = "codeberg.org/forgejo/forgejo:16";
@@ -234,6 +300,12 @@
           "/mnt/pool/forgejo:/data"
           "/etc/localtime:/etc/localtime:ro"
         ];
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "Forgejo";
+          "homepage.icon" = "forgejo.png";
+          "homepage.href" = "http://192.168.0.104:3001";
+        };
       };
 
     dind = {
@@ -321,10 +393,16 @@
           "DOCKER_MODS" = "linuxserver/mods:universal-calibre";
         };
         ports = ["8015:8083"];
-        volumes = [ 
-          "/mnt/pool/calibre/data:/config" 
+        volumes = [
+          "/mnt/pool/calibre/data:/config"
           "/mnt/pool/calibre/library:/books"
         ];
+        labels = {
+          "homepage.group" = "Media";
+          "homepage.name" = "Calibre-Web";
+          "homepage.icon" = "calibre-web.png";
+          "homepage.href" = "http://192.168.0.104:8015";
+        };
       };
       "calibre-websync" = {
         image = "vincentbitter/koreader-calibre-web-sync:latest";
@@ -333,6 +411,12 @@
           "--pull=always"
         ];
         ports = ["8016:5000"];
+        labels = {
+          "homepage.group" = "Media";
+          "homepage.name" = "Calibre KOReader Sync";
+          "homepage.icon" = "mdi-book-sync";
+          "homepage.href" = "http://192.168.0.104:8016";
+        };
       };
       "fastapi-dls" = {
         image = "collinwebdesigns/fastapi-dls:latest";
@@ -349,6 +433,12 @@
           "DLS_URL" = "192.168.0.104";
           "DLS_PORT" = "1443";
           "TZ" = "Europe/Budapest";
+        };
+        labels = {
+          "homepage.group" = "Infrastructure";
+          "homepage.name" = "FastAPI-DLS";
+          "homepage.icon" = "mdi-nvidia";
+          "homepage.href" = "https://192.168.0.104:1443";
         };
       };
 

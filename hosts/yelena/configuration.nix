@@ -5,6 +5,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./docker.nix
+      ./homepage.nix
       ./shares.nix
       ./backup.nix
       ./smart.nix
