@@ -6,6 +6,7 @@
       ./hardware-configuration.nix
       ./docker.nix
       ./homepage.nix
+      ./anubis.nix
       ./shares.nix
       ./backup.nix
       ./smart.nix
@@ -70,9 +71,9 @@
 
   time.timeZone = "Europe/Budapest";
 
-  console = {
-    keyMap = "hu";
-  };
+#  console = {
+#    keyMap = "hu";
+#  };
 
   programs.fish.enable = true;
 
