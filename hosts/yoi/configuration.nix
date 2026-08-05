@@ -12,6 +12,7 @@ in
       ../../modules/nixos.nix
       ../../modules/sops.nix
       inputs.spicetify-nix.nixosModules.default
+      inputs.turzx-player.nixosModules.default
 #      ../../modules/gpu-screen-recorder-ui.nix
     ];
 
@@ -317,7 +318,7 @@ in
   users = {
     users.skver = {
       isNormalUser = true;
-      extraGroups = [ "networkmanager" "adbusers" "libvirtd" "cdrom" "wheel" "audio" "jackaudio" "docker" "video" "input" ];
+      extraGroups = [ "networkmanager" "adbusers" "libvirtd" "cdrom" "wheel" "audio" "jackaudio" "docker" "video" "input" "plugdev" ];
       shell = pkgs.fish; 
     };
   };
@@ -339,6 +340,8 @@ in
   };
 
   services.dbus.packages = [pkgs.gcr];
+  services.turzx-player.enable = true;
+  services.turzx-player.media = "/home/skver/Videos/arknights-lone-trail.mp4";
   programs.gnupg.agent = {
     enable = true;
   };

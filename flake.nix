@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     nixcord.url = "github:FlameFlag/nixcord";
@@ -24,6 +24,8 @@
     zen-browser.url = "github:0xc000022070/zen-browser-flake"; # broken :)))))
 
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
+
+    turzx-player.url = "git+ssh://git@git.skver.space/skver/turzx-player.git";
   };
 
   outputs = inputs@{ self, nixpkgs, nixpkgs-stable, home-manager, sops-nix, vscode-server, vgpu4nixos, nix-gaming, ... }: {
