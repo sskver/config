@@ -39,8 +39,8 @@
     gamescope
     virt-viewer
     egl-wayland
-    cage
-    waydroid-helper
+    #cage
+    #waydroid-helper
     gnupg
     pinentry-qt
   ];

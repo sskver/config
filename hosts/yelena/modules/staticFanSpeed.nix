@@ -53,7 +53,9 @@ with lib;
       '';
 
       wantedBy = [ "multi-user.target" ];
-      before = [ "local-fs.target" ];
+      # no before = local-fs.target: that contradicts the implicit After=basic.target and makes
+      # systemd delete boot jobs (tmpfiles-setup, local-fs.target, ...) to break the cycle
+      after = [ "systemd-modules-load.service" ];
     };
   };
 }

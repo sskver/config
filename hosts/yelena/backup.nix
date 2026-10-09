@@ -143,7 +143,7 @@ let
 in
 {
   sops.secrets."borg-passphrase".owner = "skver";
-  sops.secrets."discord-webhook-env" = { };
+  sops.secrets."discord-webhook-infra-env" = { };
 
   services.borgbackup.jobs = {
     local-backup = basicBorgJob "local-backup" // rec {
@@ -157,6 +157,6 @@ in
   };
 
   systemd.services = lib.genAttrs (map (name: "borgbackup-job-${name}") jobNames) (_: {
-    serviceConfig.EnvironmentFile = config.sops.secrets."discord-webhook-env".path;
+    serviceConfig.EnvironmentFile = config.sops.secrets."discord-webhook-infra-env".path;
   });
 }

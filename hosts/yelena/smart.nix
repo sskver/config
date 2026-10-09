@@ -47,11 +47,11 @@ let
   '';
 in
 {
-  sops.secrets."discord-webhook-env" = { };
+  sops.secrets."discord-webhook-infra-env" = { };
 
   environment.systemPackages = [ smartdDiscordNotify smartDailyCheck ];
 
-  systemd.services.smartd.serviceConfig.EnvironmentFile = config.sops.secrets."discord-webhook-env".path;
+  systemd.services.smartd.serviceConfig.EnvironmentFile = config.sops.secrets."discord-webhook-infra-env".path;
 
   services.smartd = {
     enable = true;
@@ -95,7 +95,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${smartDailyCheck}/bin/smartDailyCheck";
-      EnvironmentFile = config.sops.secrets."discord-webhook-env".path;
+      EnvironmentFile = config.sops.secrets."discord-webhook-infra-env".path;
     };
   };
 

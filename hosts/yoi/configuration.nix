@@ -27,6 +27,23 @@ in
     "net.ipv4.conf.all.rp_filter" = 2;
     "net.ipv4.conf.default.rp_filter" = 2;
   };
+/*
+  systemd.services.nvidia-mps = {
+    description = "NVIDIA CUDA Multi-Process Service";
+    after = [ "nvidia-persistenced.service" ];
+    requires = [ "nvidia-persistenced.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ config.hardware.nvidia.package.bin ];
+    serviceConfig = {
+      Type = "forking";
+      ExecStart = "${config.hardware.nvidia.package.bin}/bin/nvidia-cuda-mps-control -d";
+      ExecStop = "${pkgs.writeShellScript "nvidia-mps-stop" ''
+        echo quit | ${config.hardware.nvidia.package.bin}/bin/nvidia-cuda-mps-control
+      ''}";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+  };*/
 
   systemd.services.tailscaled = {
     serviceConfig = {
@@ -83,8 +100,8 @@ in
   nix.settings.builders-use-substitutes = true;
 
   nix.settings = {
-    substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org" "https://cuda-maintainers.cachix.org"];
-    trusted-public-keys = ["nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=" "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="];
+    substituters = ["https://nix-gaming.cachix.org" "https://ezkea.cachix.org" "https://cache.nixos-cuda.org" "https://nix-community.cachix.org" ];
+    trusted-public-keys = ["nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="];
   };
 
   hardware = {
@@ -114,6 +131,7 @@ in
       modesetting.enable = true;
       package = config.boot.kernelPackages.nvidiaPackages.latest;
       open = true;
+    #  nvidiaPersistenced = true;
     };
 
     bluetooth = {
@@ -174,7 +192,7 @@ in
   };
 
   virtualisation = {
-    waydroid.enable = true;
+    #waydroid.enable = true;
     docker.enable = true;
     libvirtd = {
       enable = true;
@@ -186,6 +204,9 @@ in
   };
 
   services = {
+    gopod.enable = true;
+    gopod.guiPackage = inputs.gopod.packages.${pkgs.stdenv.hostPlatform.system}.gopod-gui;
+    
     resolved = {
       enable = true;
       settings.Resolve = {
@@ -241,6 +262,13 @@ in
   };
 
   programs = {
+    gpu-screen-recorder = {
+      enable = true;
+
+      ui = {
+        enable = true;
+      };
+    };
     steam = {
       extraCompatPackages = [ pkgs.proton-ge-bin ];
       enable = true;
@@ -339,9 +367,11 @@ in
     cpuFreqGovernor = "performance";
   };
 
-  services.dbus.packages = [pkgs.gcr];
+  services.dbus.packages = [pkgs.gcr_4];
   services.turzx-player.enable = true;
   services.turzx-player.media = "/home/skver/Videos/arknights-lone-trail.mp4";
+  services.turzx-player.rotate = 180;
+
   programs.gnupg.agent = {
     enable = true;
   };

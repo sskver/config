@@ -3,27 +3,48 @@
 with lib;
 
 let
+  cfg = config.hardware.gpuFanControl;
   nvidiaPkg = config.hardware.nvidia.package;
+  field = if cfg.sensor == "memory" then "temperature.memory" else "temperature.gpu";
 
   script = pkgs.writeShellScriptBin "gpu-fan-control" ''
-    PWM_PATH="${config.hardware.gpuFanControl.pwmPath}"
-    PWM_ENABLE="${config.hardware.gpuFanControl.pwmEnable}"
+    PWM_PATH="${cfg.pwmPath}"
+    PWM_ENABLE="${cfg.pwmEnable}"
+    GPU_NAME="${if cfg.gpuName == null then "" else cfg.gpuName}"
 
-    MIN_TEMP=${toString config.hardware.gpuFanControl.minTemp}
-    MAX_TEMP=${toString config.hardware.gpuFanControl.maxTemp}
-    MIN_PWM=${toString config.hardware.gpuFanControl.minPwm}
-    MAX_PWM=${toString config.hardware.gpuFanControl.maxPwm}
-    INVERT=${if config.hardware.gpuFanControl.invertPwm then "true" else "false"}
+    MIN_TEMP=${toString cfg.minTemp}
+    MAX_TEMP=${toString cfg.maxTemp}
+    MIN_PWM=${toString cfg.minPwm}
+    MAX_PWM=${toString cfg.maxPwm}
+    INVERT=${if cfg.invertPwm then "true" else "false"}
 
-    HYSTERESIS=${toString config.hardware.gpuFanControl.hysteresis}
+    HYSTERESIS=${toString cfg.hysteresis}
+
+    set_pwm() { echo "$1" > "$PWM_PATH"; }
+
+    # whatever happens to this script, leave the fan at full speed
+    trap 'set_pwm $MAX_PWM' EXIT
+    trap 'exit 0' TERM INT
+
+    for _ in $(seq 1 150); do [ -f "$PWM_ENABLE" ] && break; sleep 0.2; done
 
     echo 1 > "$PWM_ENABLE"
+    # fail safe: full speed until the first valid temperature reading
+    set_pwm $MAX_PWM
 
-    LAST_TEMP=0
-    LAST_PWM=$MIN_PWM
+    LAST_TEMP=-1000
 
     while true; do
-        TEMP=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | tail -n 1)
+        TEMP=$(nvidia-smi --query-gpu=name,${field} --format=csv,noheader,nounits 2>/dev/null \
+            | grep -i -- "$GPU_NAME" | head -n 1 | awk -F', ' '{print $NF}')
+
+        if ! [[ "$TEMP" =~ ^[0-9]+$ ]]; then
+            # no usable reading (driver not ready, GPU reset, N/A): full speed, re-apply on the next good one
+            set_pwm $MAX_PWM
+            LAST_TEMP=-1000
+            sleep 3
+            continue
+        fi
 
         if [[ $TEMP -ge $((LAST_TEMP + HYSTERESIS)) || $TEMP -le $((LAST_TEMP - HYSTERESIS)) ]]; then
             if [[ $TEMP -le $MIN_TEMP ]]; then
@@ -40,11 +61,10 @@ let
                 PWM=$RAW_PWM
             fi
 
-            echo $PWM > "$PWM_PATH"
-            echo "GPU Temp: $TEMP°C → PWM: $PWM (Inverted: $INVERT)"
+            set_pwm $PWM
+            echo "${cfg.sensor} temp: $TEMP°C → PWM: $PWM (Inverted: $INVERT)"
 
             LAST_TEMP=$TEMP
-            LAST_PWM=$PWM
         fi
 
         sleep 3
@@ -57,7 +77,7 @@ let
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/gpu-fan-control \
-        --prefix PATH : ${lib.makeBinPath [ pkgs.coreutils nvidiaPkg ]}
+        --prefix PATH : ${lib.makeBinPath [ pkgs.coreutils pkgs.gnugrep pkgs.gawk nvidiaPkg ]}
     '';
   };
 in
@@ -77,6 +97,25 @@ in
       description = "Path to PWM enable file";
     };
 
+    sensor = mkOption {
+      type = types.enum [ "gpu" "memory" ];
+      default = "gpu";
+      description = ''
+        Which nvidia-smi temperature drives the fan. HBM cards (P100, V100) throttle on the
+        memory temperature, which runs well above the core temperature.
+      '';
+    };
+
+    gpuName = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "Tesla V100";
+      description = ''
+        Only use a GPU whose nvidia-smi name contains this (case-insensitive). With several GPUs
+        installed this selects the right one; null uses the first GPU nvidia-smi lists.
+      '';
+    };
+
     minTemp = mkOption { type = types.int; default = 40; };
     maxTemp = mkOption { type = types.int; default = 75; };
     minPwm  = mkOption { type = types.int; default = 127; };
@@ -90,12 +129,15 @@ in
     };
   };
 
-  config = mkIf config.hardware.gpuFanControl.enable {
+  config = mkIf cfg.enable {
     systemd.services.gpu-fan-control = {
       description = "GPU Fan Control Service";
       wantedBy = [ "multi-user.target" ];
+      after = [ "systemd-modules-load.service" ];
       serviceConfig = {
         ExecStart = "${wrappedScript}/bin/gpu-fan-control";
+        # if the script is killed hard, still leave the fan at full speed
+        ExecStopPost = "${pkgs.runtimeShell} -c 'echo ${toString cfg.maxPwm} > ${cfg.pwmPath}'";
         Restart = "always";
         RestartSec = "5s";
       };

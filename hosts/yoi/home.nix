@@ -10,6 +10,9 @@
   
   home.stateVersion = "23.05"; 
   home.packages = with pkgs; [
+    teams-for-linux
+    direnv
+    nix-direnv
     audacious
     easyeffects
     openrgb
@@ -21,9 +24,9 @@
     wine-staging
     gcc
     zed-editor
-    go
-    gopls
-    golangci-lint
+    #go
+    #gopls
+    #golangci-lint
     crosspipe
     grim
     slurp

@@ -101,5 +101,13 @@
         TARGET = "http://127.0.0.1:8007";
       };
     };
+
+    kanade = {
+      settings = {
+        BIND = "0.0.0.0:9008";
+        BIND_NETWORK = "tcp";
+        TARGET = "http://192.168.0.104:8018";
+      };
+    };
   };
 }

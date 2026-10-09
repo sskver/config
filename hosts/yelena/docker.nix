@@ -1,16 +1,45 @@
 { config, lib, pkgs, ... }:
 
+let
+  # kanade and skverspace run with --pull=always against the local registry, so a start fails with
+  # "connection refused" while the registry container is up but not yet listening. dependsOn only
+  # orders the units, so wait for the registry's HTTP API to answer before docker run.
+  registryGate = ''
+    for i in $(seq 1 60); do
+      curl -sf -o /dev/null http://192.168.0.104:5000/v2/ && break
+      sleep 1
+    done
+  '';
+in
 {
   sops.secrets."ddns-config-env" = { };
   sops.secrets."hath-env" = { };
   sops.secrets."pihole-env" = { };
   sops.secrets."gitpass" = { };
+  sops.secrets."kanade-env" = { };
 
   systemd.services.docker.after = [
     "zfs-import.target"
     "local-fs.target"
     "mnt-pool-torrents.mount"
     "mnt-pool.mount"
+    "mnt-pool-kanade.mount"
+    "systemd-tmpfiles-setup.service"
+  ];
+
+  systemd.services.docker-kanade.path = [ pkgs.curl ];
+  systemd.services.docker-kanade.preStart = lib.mkBefore registryGate;
+  systemd.services.docker-skverspace.path = [ pkgs.curl ];
+  systemd.services.docker-skverspace.preStart = lib.mkBefore registryGate;
+
+  systemd.tmpfiles.rules = [
+    "d /run/valkey 0777 root root -"
+    "d /mnt/pool/music 0775 skver users -"
+    "d /mnt/pool/music-test 0775 skver users -"
+    "d /mnt/pool/slskd 0775 skver users -"
+    "d /mnt/pool/slskd/config 0775 skver users -"
+    "d /mnt/pool/slskd/downloads 0775 skver users -"
+    "d /mnt/pool/soularr 0775 skver users -"
   ];
 
   virtualisation.docker = {
@@ -111,9 +140,9 @@
           "--pull=always"
           "--ulimit=nofile=16384:16384"
         ];
-        volumes = [ 
+        volumes = [
           "/mnt/pool/rtorrent:/config"
-          "/mnt/pool/torrents:/mnt"  
+          "/mnt/pool/torrents:/mnt"
         ];
         ports = [
           "50000:50000"
@@ -249,6 +278,83 @@
           "homepage.href" = "http://192.168.0.104:8006";
         };
       };
+      "lidarr" = {
+        image = "linuxserver/lidarr:nightly";
+        autoStart = true;
+        extraOptions = [
+          "--pull=always"
+        ];
+        ports = ["8019:8686"];
+        volumes = [
+          "lidarr-data:/config"
+          "/mnt/pool/music:/music"
+          "/mnt/pool/slskd/downloads:/downloads"
+        ];
+        environment = {
+          "PUID" = "1000";
+          "PGID" = "1000";
+          "TZ" = "Europe/Budapest";
+        };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Lidarr";
+          "homepage.icon" = "lidarr.png";
+          "homepage.href" = "http://192.168.0.104:8019";
+        };
+      };
+      "lidarr-test" = {
+        image = "linuxserver/lidarr:nightly";
+        autoStart = true;
+        extraOptions = [
+          "--pull=always"
+        ];
+        ports = ["8021:8686"];
+        volumes = [
+          "lidarr-test-data:/config"
+          "/mnt/pool/music-test:/music"
+          "/mnt/pool/slskd/downloads:/downloads"
+        ];
+        environment = {
+          "PUID" = "1000";
+          "PGID" = "1000";
+          "TZ" = "Europe/Budapest";
+        };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "Lidarr (test)";
+          "homepage.icon" = "lidarr.png";
+          "homepage.href" = "http://192.168.0.104:8021";
+        };
+      };
+      "slskd" = {
+        image = "slskd/slskd:latest";
+        autoStart = true;
+        extraOptions = [
+          "--pull=always"
+        ];
+        ports = [
+          "8020:5030"
+          "50300:50300"
+        ];
+        volumes = [
+          "/mnt/pool/slskd/config:/app"
+          "/mnt/pool/slskd/downloads:/downloads"
+          "/mnt/pool/music:/music:ro"
+        ];
+        environment = {
+          "PUID" = "1000";
+          "PGID" = "1000";
+          "TZ" = "Europe/Budapest";
+          "SLSKD_REMOTE_CONFIGURATION" = "true";
+          "SLSKD_DOWNLOADS_DIR" = "/downloads";
+        };
+        labels = {
+          "homepage.group" = "Downloads";
+          "homepage.name" = "slskd";
+          "homepage.icon" = "slskd.png";
+          "homepage.href" = "http://192.168.0.104:8020";
+        };
+      };
       "skverspace" = {
         image = "192.168.0.104:5000/skver.space/web:latest";
         autoStart = true;
@@ -264,8 +370,40 @@
           "homepage.href" = "http://192.168.0.104:8007";
         };
       };
+      "kanade" = {
+        image = "192.168.0.104:5000/skver/kanade:latest";
+        autoStart = true;
+        extraOptions = [
+          "--pull=always"
+        ];
+        ports = ["8018:3000"];
+        dependsOn = [ "registry" ];
+        environment = {
+          "ORIGIN" = "https://kanade.stream";
+          "DATA_DIR" = "/data";
+          "KANADE_DIR" = "/state";
+          "DISCORD_CLIENT_ID" = "1544362500307550328";
+          "DISCORD_REDIRECT_URI" = "https://kanade.stream/auth/discord/callback";
+          "KANADE_ADMIN_DISCORD_IDS" = "212558627016409088";
+          "SESSION_TTL_DAYS" = "30";
+          "VALKEY_URL" = "/var/run/valkey/valkey.sock";
+          "KANADE_PREFER_TRANSLATOR" = "qwen,gemma";
+        };
+        environmentFiles = [ config.sops.secrets."kanade-env".path ];
+        volumes = [
+          "/mnt/pool/kanade/media:/data:ro"
+          "/mnt/pool/kanade/state:/state"
+          "/run/valkey:/var/run/valkey"
+        ];
+        labels = {
+          "homepage.group" = "Media";
+          "homepage.name" = "Kanade";
+          "homepage.icon" = "mdi-music";
+          "homepage.href" = "https://kanade.stream";
+        };
+      };
       "jellyseerr" = {
-        image = "fallenbagel/jellyseerr:latest";
+        image = "seerr/seerr:latest";
         autoStart = true;
         extraOptions = [
           "--pull=always"
@@ -425,8 +563,8 @@
           "--pull=always"
         ];
         ports = ["1443:443"];
-        volumes = [ 
-          "/mnt/pool/fastapi-dls/cert:/app/cert" 
+        volumes = [
+          "/mnt/pool/fastapi-dls/cert:/app/cert"
           "/mnt/pool/fastapi-dls/db:/app/database"
           ];
         environment = {
@@ -505,6 +643,26 @@
           "/mnt/pool/alloy/positions:/positions"
         ];
         cmd = [ "run" "--storage.path=/positions" "/etc/alloy/config.alloy" ];
+      };
+      valkey = {
+        image = "valkey/valkey:9.1.2-alpine";
+        autoStart = true;
+        extraOptions = [
+          "--pull=always"
+        ];
+        cmd = [
+          "valkey-server"
+          "--port" "0"
+          "--unixsocket" "/var/run/valkey/valkey.sock"
+          "--unixsocketperm" "777"
+          "--save" ""
+          "--appendonly" "no"
+          "--maxmemory" "256mb"
+          "--maxmemory-policy" "allkeys-lfu"
+        ];
+        volumes = [
+          "/run/valkey:/var/run/valkey"
+        ];
       };
     };
   };

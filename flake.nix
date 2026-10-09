@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     nixcord.url = "github:FlameFlag/nixcord";
@@ -26,15 +26,21 @@
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
 
     turzx-player.url = "git+ssh://git@git.skver.space/skver/turzx-player.git";
+
+    gopod = {
+      url = "git+file:///home/skver/gopod";
+      inputs.apple-art.url = "path:/home/skver/gopod/gui/desktop/assets";
+    };    
   };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-stable, home-manager, sops-nix, vscode-server, vgpu4nixos, nix-gaming, ... }: {
+  outputs = inputs@{ self, nixpkgs, nixpkgs-stable, home-manager, sops-nix, vscode-server, vgpu4nixos, nix-gaming, gopod, ... }: {
     nixosConfigurations = {
 
       yoi = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           ./hosts/yoi/configuration.nix
+          gopod.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
